@@ -2,8 +2,8 @@
 
 #[macro_use]
 extern crate rocket;
-use rocket::request::{self, FromRequest, Request};
-use rocket::Outcome;
+use rocket::http::RawStr;
+use rocket::request::FromParam;
 
 #[cfg(test)]
 mod tests;
@@ -27,16 +27,15 @@ mod tests;
 //      where 0 < age <= usize::max_value()
 //
 
-struct GoodAge;
+struct GoodAge(usize);
 
-impl<'a, 'r> FromRequest<'a, 'r> for GoodAge {
-    type Error = ();
+impl<'r> FromParam<'r> for GoodAge {
+    type Error = &'r RawStr;
 
-    fn from_request(request: &'a Request<'r>) -> request::Outcome<Self, Self::Error> {
-        let age = request.get_param(1).unwrap();
-        match age {
-            Ok(0..=122) => Outcome::Success(Self),
-            _ => Outcome::Forward(()),
+    fn from_param(param: &'r RawStr) -> Result<Self, Self::Error> {
+        match usize::from_param(param) {
+            Ok(age @ 1..=122) => Ok(Self(age)),
+            _ => Err(param),
         }
     }
 }
@@ -47,8 +46,8 @@ fn simple_hello(name: String) -> String {
 }
 
 #[get("/<name>/<age>")]
-fn good_aged_hello(name: String, age: usize, _good_age: GoodAge) -> String {
-    format!("Hello, {} year old {}.", age, name)
+fn good_aged_hello(name: String, age: GoodAge) -> String {
+    format!("Hello, {} year old {}.", age.0, name)
 }
 
 #[get("/<name>/<age>", rank = 2)]
@@ -57,7 +56,6 @@ fn bad_aged_hello(name: String, age: usize) -> String {
 }
 
 fn main() {
-    println!("foo");
     rocket::ignite()
         .mount("/", routes![simple_hello, good_aged_hello, bad_aged_hello])
         .launch();
