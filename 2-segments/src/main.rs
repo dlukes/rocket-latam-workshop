@@ -17,17 +17,14 @@ struct CustomPath<'a>(&'a str);
 // path component in the `CustomPath` value.
 
 impl<'a> FromSegments<'a> for CustomPath<'a> {
-    type Error = usize;
+    type Error = i32;
 
-    fn from_segments(segments: Segments<'a>) -> Result<Self, Self::Error> {
-        let mut n = 0;
-        for seg in segments {
-            n += 1;
-            if n == 2 {
-                return Ok(CustomPath(seg));
-            }
-        }
-        Err(n)
+    fn from_segments(mut segments: Segments<'a>) -> Result<Self, Self::Error> {
+        let n = match segments.next() {
+            Some(_) => 1,
+            None => 0,
+        };
+        Ok(CustomPath(segments.next().ok_or(n)?))
     }
 }
 
@@ -56,7 +53,7 @@ impl<'a> FromSegments<'a> for CustomPath<'a> {
 // `echo`. If all else fails, `echo` should respond.
 
 #[get("/outer/<path..>")]
-fn outer(path: Result<CustomPath, usize>) -> String {
+fn outer(path: Result<CustomPath, i32>) -> String {
     match path {
         Ok(path) => path.0.to_owned(),
         Err(n) => format!("Expected >= 2 segments, found {}.", n),
@@ -70,7 +67,7 @@ fn inner(path: CustomPath) -> String {
 
 #[get("/<path..>", rank = 2)]
 fn echo(path: PathBuf) -> String {
-    path.into_os_string().into_string().unwrap()
+    path.display().to_string()
 }
 
 fn main() {
