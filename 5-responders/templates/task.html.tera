@@ -6,6 +6,8 @@
         <title>Task: {{ name }}</title>
     </head>
     <body>
+        <h1>Templates can be modified while the app is running</h1>
+        <p>They will be reloaded automatically upon the next request.</p>
         <h3>{{ name }}</h3>
         <ul>
             <li>ID: {{ id }}</li>
