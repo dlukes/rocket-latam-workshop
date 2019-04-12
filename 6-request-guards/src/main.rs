@@ -1,9 +1,16 @@
 #![feature(proc_macro_hygiene, decl_macro, never_type)]
 
-#[macro_use] extern crate rocket;
+#[macro_use]
+extern crate rocket;
 
-#[cfg(test)] mod tests;
+use rocket::http::{Cookie, Cookies};
+use rocket::request::Form;
+use rocket::response::NamedFile;
+use rocket::response::Redirect;
+
 mod roles;
+#[cfg(test)]
+mod tests;
 
 use roles::{Admin, User};
 
@@ -16,7 +23,12 @@ use roles::{Admin, User};
 //        "Hello, admin <id>!"
 //
 //     where <id> is the admin's user ID.
-//
+
+#[get("/")]
+fn admin_index(admin: Admin) -> String {
+    format!("Hello, admin {}!", admin.0.id)
+}
+
 //   * (user_index) GET /
 //
 //     Responds only if a regular `User` user is logged in. Returns the text:
@@ -25,16 +37,31 @@ use roles::{Admin, User};
 //
 //     where <id> is the user's user ID. NOTE: The `admin_index` route takes
 //     precedence over this route.
-//
+
+#[get("/", rank = 2)]
+fn user_index(user: User) -> String {
+    format!("Hello, user {}!", user.id)
+}
+
 //   * (index) GET /
 //
 //     Redirects to `login_page`. NOTE: The `admin_index` and `user_index`
 //     routes take precedence over this route.
-//
+
+#[get("/", rank = 3)]
+fn index() -> Redirect {
+    Redirect::to(uri!(login_page))
+}
+
 //   * (login_page) GET /login
 //
 //     Responds with the contents of `static/login.html`.
-//
+
+#[get("/login")]
+fn login_page() -> Option<NamedFile> {
+    NamedFile::open("static/login.html").ok()
+}
+
 //   * (login_submit) POST /login
 //
 //     Accepts a form with the following fields:
@@ -47,7 +74,24 @@ use roles::{Admin, User};
 //     the password is "123456", logs in a user with an id of `1` and redirects
 //     to `index`. If the username and password are anything else, redirects to
 //     `login_page`.
-//
+
+#[derive(FromForm)]
+struct LoginCredentials {
+    username: String,
+    password: String,
+}
+
+#[post("/login", data = "<credentials>")]
+fn login_submit(credentials: Form<LoginCredentials>, mut cookies: Cookies) -> Redirect {
+    let user_id = match (credentials.username.as_ref(), credentials.password.as_ref()) {
+        ("admin", "password") => "0",
+        ("bob", "123456") => "1",
+        _ => return Redirect::to(uri!(login_page)),
+    };
+    cookies.add_private(Cookie::new("user_id", user_id));
+    Redirect::to(uri!(index))
+}
+
 //   * (logout) GET /logout
 //
 //     Logs the current user out, if any, then redirects to `index`.
@@ -56,6 +100,11 @@ use roles::{Admin, User};
 //     convenience. In reality, we'd use Rocket's _method rewriting_ mechanism
 //     to issue a `POST`.
 
+#[get("/logout")]
+fn logout(mut cookies: Cookies) -> Redirect {
+    cookies.remove_private(Cookie::named("user_id"));
+    Redirect::to(uri!(index))
+}
 
 fn main() {
     rocket::ignite()
