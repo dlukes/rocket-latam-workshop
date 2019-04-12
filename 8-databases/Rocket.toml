@@ -1,2 +1,3 @@
 [global.databases]
 # FIXME: Configure the `tasks.sqlite` database.
+tasks = { url = "tasks.sqlite" }
