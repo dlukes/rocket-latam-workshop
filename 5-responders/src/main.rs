@@ -118,30 +118,15 @@ enum OneTaskResponder {
     Error(String),
 }
 
-struct OneTaskKind(String);
-
-impl<'r> FromParam<'r> for OneTaskKind {
-    type Error = &'r RawStr;
-
-    fn from_param(param: &'r RawStr) -> Result<Self, Self::Error> {
-        let decoded = param.percent_decode_lossy();
-        match decoded.as_ref() {
-            "html" | "json" => Ok(Self(decoded.into_owned())),
-            _ => Err(param),
-        }
-    }
-}
-
 #[get("/tasks/<id>/<kind>")]
-fn one_task(id: u8, kind: OneTaskKind) -> OneTaskResponder {
+fn one_task(id: u8, kind: Kind) -> OneTaskResponder {
     let task = match TASKS.get(id as usize) {
         Some(task) => task,
         None => return OneTaskResponder::Error(format!("Unknown task: {}", id)),
     };
-    match kind.0.as_ref() {
-        "json" => OneTaskResponder::Json(json!(task)),
-        "html" => OneTaskResponder::Html(Template::render("task", task)),
-        _ => unreachable!(),
+    match kind {
+        Kind::Html => OneTaskResponder::Html(Template::render("task", task)),
+        Kind::Json => OneTaskResponder::Json(json!(task)),
     }
 }
 
