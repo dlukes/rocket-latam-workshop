@@ -1,0 +1,22 @@
+{% extends "base" %}
+
+{% block content %}
+  <h1>{{ talk.title }}</h1>
+  <ul>
+    <li>Presented by: {{ talk.presenter }}</li>
+    <li>Status: {{ talk.status }}</li>
+  </ul>
+  <p>{{ talk.description }}</p>
+  {% if user.is_admin %}
+    <form action="/talks/{{ talk.id }}/status" method="post" accept-charset="utf-8">
+      <input type="hidden" name="_method" value="put" />
+      <label for="new_status">New status:</label>
+      <select name="new_status">
+        <option value="pending">pending</option>
+        <option value="approved">approved</option>
+        <option value="rejected">rejected</option>
+      </select>
+      <p><input type="submit" value="Submit"></p>
+    </form>
+  {% endif %}
+{% endblock content %}

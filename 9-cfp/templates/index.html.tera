@@ -1,0 +1,17 @@
+{% extends "base" %}
+
+{% block content %}
+  <h1>Your talks:</h1>
+  <ul>
+  {% for talk in talks %}
+    <li><a href="/talks/{{ talk.id }}">{{ talk.title }}</a></li>
+  {% endfor %}
+  </ul>
+  <form action="/talks" method="post" accept-charset="utf-8">
+    <label for="title">Title</label>
+    <input type="text" name="title" value="" />
+    <label for="description">Description</label>
+    <input type="text" name="description" value="" />
+    <p><input type="submit" value="Submit"></p>
+  </form>
+{% endblock content %}

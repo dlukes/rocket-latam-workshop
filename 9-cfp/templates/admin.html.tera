@@ -1,0 +1,10 @@
+{% extends "base" %}
+
+{% block content %}
+  <h1>All talks:</h1>
+  <ul>
+  {% for talk in talks %}
+    <li><a href="/talks/{{ talk.id }}">{{ talk.title }} / {{ talk.status }}</a></li>
+  {% endfor %}
+  </ul>
+{% endblock content %}

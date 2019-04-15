@@ -1,0 +1,5 @@
+{% extends "base" %}
+
+{% block content %}
+  <p>Only logged in administrators have access to the admin interface.</p>
+{% endblock content %}

@@ -9,7 +9,7 @@ use rocket::http::{Cookie, Cookies, SameSite};
 use rocket::request::{State, Form};
 use rocket::response::Redirect;
 
-use DbConn;
+use crate::DbConn;
 use user::User;
 
 /// Generates a new random state string.

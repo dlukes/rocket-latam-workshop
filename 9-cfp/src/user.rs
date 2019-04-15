@@ -6,7 +6,7 @@ use schema::users;
 use DbConn;
 
 /// User data retrieved from the database
-#[derive(Clone, Queryable, Serialize)]
+#[derive(Debug, Clone, Queryable, Serialize)]
 pub struct User {
     pub id: i32,
     pub github_id: String,
